@@ -8,7 +8,8 @@ CREATE TABLE customers
     password   VARCHAR(100) NOT NULL,
     gender     VARCHAR(50),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY username_unique (username)
+    UNIQUE KEY username_unique (username),
+    UNIQUE KEY email_unique (email)
 ) ENGINE = InnoDB;
 -- +goose StatementEnd
 
