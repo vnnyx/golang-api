@@ -26,7 +26,7 @@ func (service *CustomerServiceImpl) CreateCustomer(ctx context.Context, request 
 
 	tx, err := service.DB.Begin()
 	exception.PanicIfNeeded(err)
-	defer helper.CommitOrRollbackWithMessage(tx, "USERNAME_REGISTERED")
+	defer helper.CommitOrRollback(tx)
 
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	exception.PanicIfNeeded(err)
@@ -101,6 +101,7 @@ func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request 
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	exception.PanicIfNeeded(err)
 	customer = entity.Customer{
+		Id:       request.Id,
 		Username: request.Username,
 		Email:    request.Email,
 		Password: string(password),
@@ -125,9 +126,7 @@ func (service *CustomerServiceImpl) DeleteCustomer(ctx context.Context, customer
 	defer helper.CommitOrRollback(tx)
 
 	_, err = service.CustomerRepository.GetCustomerById(ctx, tx, customerId)
-	if err != nil {
-		exception.PanicIfNeeded("USER_NOT_FOUND")
-	}
+	exception.PanicIfNeeded(err)
 
 	service.CustomerRepository.DeleteCustomer(ctx, tx, customerId)
 }

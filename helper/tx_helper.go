@@ -16,15 +16,3 @@ func CommitOrRollback(tx *sql.Tx) {
 		exception.PanicIfNeeded(errorCommit)
 	}
 }
-
-func CommitOrRollbackWithMessage(tx *sql.Tx, message string) {
-	err := recover()
-	if err != nil {
-		errorRollback := tx.Rollback()
-		exception.PanicIfNeeded(errorRollback)
-		exception.PanicIfNeeded(message)
-	} else {
-		errorCommit := tx.Commit()
-		exception.PanicIfNeeded(errorCommit)
-	}
-}
