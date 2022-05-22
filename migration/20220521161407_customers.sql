@@ -2,12 +2,13 @@
 -- +goose StatementBegin
 CREATE TABLE customers
 (
-    id         INT primary key auto_increment,
-    username   VARCHAR(100) unique,
-    email      VARCHAR(255),
-    password   VARCHAR(100),
+    id         INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    username   VARCHAR(100) NOT NULL,
+    email      VARCHAR(255) NOT NULL,
+    password   VARCHAR(100) NOT NULL,
     gender     VARCHAR(50),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY username_unique (username)
 ) ENGINE = InnoDB;
 -- +goose StatementEnd
 
