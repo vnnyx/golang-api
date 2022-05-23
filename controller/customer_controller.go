@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/labstack/echo/v4"
 	"golang-simple-api/exception"
+	"golang-simple-api/middleware"
 	"golang-simple-api/model"
 	"golang-simple-api/service"
 	"strconv"
@@ -17,7 +18,7 @@ func NewCustomerController(customerService *service.CustomerService) CustomerCon
 }
 
 func (controller *CustomerController) Route(e *echo.Echo) {
-	router := e.Group("/api/customer")
+	router := e.Group("/api/customer", middleware.CheckToken)
 	router.POST("", controller.CreateCustomer)
 	router.GET("/:id", controller.GetCustomerById)
 	router.GET("", controller.GetAllCustomer)
