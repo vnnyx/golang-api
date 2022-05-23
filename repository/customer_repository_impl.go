@@ -70,3 +70,19 @@ func (repo *CustomerRepositoryImpl) DeleteCustomer(ctx context.Context, tx *sql.
 	_, err := tx.ExecContext(ctx, SQL, customerId)
 	exception.PanicIfNeeded(err)
 }
+
+func (repo *CustomerRepositoryImpl) GetUserByUsername(ctx context.Context, tx *sql.Tx, username string) (entity.Customer, error) {
+	SQL := "SELECT * FROM customers WHERE username=?"
+	rows, err := tx.QueryContext(ctx, SQL, username)
+	exception.PanicIfNeeded(err)
+	defer rows.Close()
+
+	customer := entity.Customer{}
+	if rows.Next() {
+		err := rows.Scan(&customer.Id, &customer.Username, &customer.Email, &customer.Password, &customer.Gender, &customer.CreatedAt)
+		exception.PanicIfNeeded(err)
+		return customer, nil
+	} else {
+		return customer, errors.New("customer not found")
+	}
+}
