@@ -12,16 +12,21 @@ import (
 
 func main() {
 	configuration := config.New(".env")
+	rdb := config.NewRedisClient()
 	database := config.NewMySQLDatabase(configuration)
 
 	customerRepository := repository.NewCustomerRepository()
 	customerService := service.NewCustomerService(database, &customerRepository)
+	authService := service.NewAuthService(database, &customerRepository, rdb)
 	customerController := controller.NewCustomerController(&customerService)
+	authController := controller.NewAuthController(&authService)
 
 	app := echo.New()
 	app.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{DisablePrintStack: true}))
+	app.Use(middleware.CORS())
 	app.HTTPErrorHandler = exception.ErrorHandler
 	customerController.Route(app)
+	authController.Route(app)
 	err := app.Start(":9000")
 	exception.PanicIfNeeded(err)
 }
