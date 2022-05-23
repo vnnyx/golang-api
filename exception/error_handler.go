@@ -20,7 +20,8 @@ func ErrorHandler(err error, ctx echo.Context) {
 }
 
 func generalError(err error, ctx echo.Context) {
-	if err.Error() == "USER_NOT_FOUND" {
+	switch err.Error() {
+	case "USER_NOT_FOUND":
 		_ = ctx.JSON(http.StatusNotFound, model.WebResponse{
 			Code:   http.StatusNotFound,
 			Status: "BAD_REQUEST",
@@ -29,7 +30,18 @@ func generalError(err error, ctx echo.Context) {
 				"id": "NOT_FOUND",
 			},
 		})
-	} else {
+		break
+	case model.UNAUTHORIZATION:
+		_ = ctx.JSON(http.StatusUnauthorized, model.WebResponse{
+			Code:   http.StatusUnauthorized,
+			Status: "UNAUTHORIZED",
+			Data:   nil,
+			Error: map[string]interface{}{
+				"general": "UNAUTHORIZED",
+			},
+		})
+		break
+	default:
 		_ = ctx.JSON(http.StatusInternalServerError, model.WebResponse{
 			Code:   http.StatusInternalServerError,
 			Status: "INTERNAL_SERVER_ERROR",
