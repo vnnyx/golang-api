@@ -12,4 +12,5 @@ type CustomerRepository interface {
 	GetCustomerById(ctx context.Context, tx *sql.Tx, customerId int) (entity.Customer, error)
 	UpdateCustomer(ctx context.Context, tx *sql.Tx, customer entity.Customer) entity.Customer
 	DeleteCustomer(ctx context.Context, tx *sql.Tx, customerId int)
+	GetUserByUsername(ctx context.Context, tx *sql.Tx, username string) (entity.Customer, error)
 }
