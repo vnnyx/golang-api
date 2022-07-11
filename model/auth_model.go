@@ -7,13 +7,13 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	AccessToken string `json:"access_token,omitempty"`
-	UserId      int    `json:"user_id,omitempty"`
+	UserId      uint32 `json:"user_id,omitempty"`
 	Username    string `json:"username,omitempty"`
 	Email       string `json:"email,omitempty"`
 }
 
 type JwtPayload struct {
-	UserId     int
+	UserId     uint32
 	Username   string
 	Email      string
 	AccessUuid string
