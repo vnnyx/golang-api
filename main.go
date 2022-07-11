@@ -16,7 +16,7 @@ func main() {
 	database := config.NewMySQLDatabase(configuration)
 
 	customerRepository := repository.NewCustomerRepository(database)
-	customerService := service.NewCustomerService(&customerRepository)
+	customerService := service.NewCustomerService(customerRepository)
 	authService := service.NewAuthService(&customerRepository, rdb)
 	customerController := controller.NewCustomerController(&customerService)
 	authController := controller.NewAuthController(&authService)
