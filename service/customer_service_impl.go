@@ -14,20 +14,18 @@ type CustomerServiceImpl struct {
 	repository.CustomerRepository
 }
 
-func NewCustomerService(customerRepository *repository.CustomerRepository) CustomerService {
-	return &CustomerServiceImpl{CustomerRepository: *customerRepository}
+func NewCustomerService(customerRepository repository.CustomerRepository) CustomerService {
+	return &CustomerServiceImpl{CustomerRepository: customerRepository}
 }
 
 func (service *CustomerServiceImpl) CreateCustomer(ctx context.Context, request model.CustomerCreateRequest) model.CustomerResponse {
 	validation.Validate(request)
 
-	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-	exception.PanicIfNeeded(err)
-
 	customer := entity.Customer{
+		Id:       request.Id,
 		Username: request.Username,
 		Email:    request.Email,
-		Password: string(password),
+		Password: request.Password,
 		Gender:   request.Gender,
 	}
 
@@ -57,7 +55,7 @@ func (service *CustomerServiceImpl) GetAllCustomer(ctx context.Context) []model.
 	return response
 }
 
-func (service *CustomerServiceImpl) GetCustomerById(ctx context.Context, customerId int) model.CustomerResponse {
+func (service *CustomerServiceImpl) GetCustomerById(ctx context.Context, customerId uint32) model.CustomerResponse {
 	customer, err := service.CustomerRepository.GetCustomerById(ctx, customerId)
 	if err != nil {
 		exception.PanicIfNeeded("USER_NOT_FOUND")
@@ -102,7 +100,7 @@ func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request 
 	return response
 }
 
-func (service *CustomerServiceImpl) DeleteCustomer(ctx context.Context, customerId int) {
+func (service *CustomerServiceImpl) DeleteCustomer(ctx context.Context, customerId uint32) {
 	_, err := service.CustomerRepository.GetCustomerById(ctx, customerId)
 	exception.PanicIfNeeded(err)
 

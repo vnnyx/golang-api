@@ -8,7 +8,7 @@ import (
 type CustomerService interface {
 	CreateCustomer(ctx context.Context, request model.CustomerCreateRequest) model.CustomerResponse
 	GetAllCustomer(ctx context.Context) []model.CustomerResponse
-	GetCustomerById(ctx context.Context, customerId int) model.CustomerResponse
+	GetCustomerById(ctx context.Context, customerId uint32) model.CustomerResponse
 	UpdateCustomer(ctx context.Context, request model.CustomerUpdateRequest) model.CustomerResponse
-	DeleteCustomer(ctx context.Context, customerId int)
+	DeleteCustomer(ctx context.Context, customerId uint32)
 }

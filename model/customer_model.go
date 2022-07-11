@@ -1,23 +1,24 @@
 package model
 
 type CustomerCreateRequest struct {
-	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Password string `json:"password,omitempty"`
-	Gender   string `json:"gender,omitempty"`
+	Id       uint32 `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Gender   string `json:"gender"`
 }
 
 type CustomerUpdateRequest struct {
-	Id       int    `json:"id,omitempty"`
-	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Password string `json:"password,omitempty"`
-	Gender   string `json:"gender,omitempty"`
+	Id       uint32 `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Gender   string `json:"gender"`
 }
 
 type CustomerResponse struct {
-	Id       int    `json:"id,omitempty"`
-	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Gender   string `json:"gender,omitempty"`
+	Id       uint32 `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Gender   string `json:"gender"`
 }

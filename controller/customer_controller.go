@@ -1,11 +1,13 @@
 package controller
 
 import (
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang-simple-api/exception"
 	"golang-simple-api/middleware"
 	"golang-simple-api/model"
 	"golang-simple-api/service"
+	"golang.org/x/crypto/bcrypt"
 	"strconv"
 )
 
@@ -30,6 +32,11 @@ func (controller CustomerController) CreateCustomer(c echo.Context) error {
 	err := c.Bind(&request)
 	exception.PanicIfNeeded(err)
 
+	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	exception.PanicIfNeeded(err)
+	request.Password = string(password)
+	request.Id = uuid.New().ID()
+
 	response := controller.CustomerService.CreateCustomer(c.Request().Context(), request)
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
@@ -40,7 +47,7 @@ func (controller CustomerController) CreateCustomer(c echo.Context) error {
 
 func (controller CustomerController) GetCustomerById(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	response := controller.CustomerService.GetCustomerById(c.Request().Context(), id)
+	response := controller.CustomerService.GetCustomerById(c.Request().Context(), uint32(id))
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",
@@ -60,7 +67,7 @@ func (controller CustomerController) GetAllCustomer(c echo.Context) error {
 func (controller CustomerController) UpdateCustomer(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var request model.CustomerUpdateRequest
-	request.Id = id
+	request.Id = uint32(id)
 	err := c.Bind(&request)
 	exception.PanicIfNeeded(err)
 	response := controller.CustomerService.UpdateCustomer(c.Request().Context(), request)
@@ -73,7 +80,7 @@ func (controller CustomerController) UpdateCustomer(c echo.Context) error {
 
 func (controller CustomerController) DeleteCustomer(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	controller.CustomerService.DeleteCustomer(c.Request().Context(), id)
+	controller.CustomerService.DeleteCustomer(c.Request().Context(), uint32(id))
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",

@@ -21,12 +21,9 @@ func (repo *CustomerRepositoryImpl) CreateCustomer(ctx context.Context, customer
 	tx, err := repo.DB.Begin()
 	exception.PanicIfNeeded(err)
 	defer helper.CommitOrRollback(tx)
-	SQL := "INSERT into customers(username, email, password, gender) VALUES (?,?,?,?)"
-	result, err := tx.ExecContext(ctx, SQL, customer.Username, customer.Email, customer.Password, customer.Gender)
+	SQL := "INSERT into customers(id, username, email, password, gender) VALUES (?,?,?,?,?)"
+	_, err = tx.ExecContext(ctx, SQL, customer.Id, customer.Username, customer.Email, customer.Password, customer.Gender)
 	exception.PanicIfNeeded(err)
-
-	id, _ := result.LastInsertId()
-	customer.Id = int(id)
 
 	return customer
 }
@@ -49,7 +46,7 @@ func (repo *CustomerRepositoryImpl) GetAllCustomer(ctx context.Context) []entity
 	return customers
 }
 
-func (repo *CustomerRepositoryImpl) GetCustomerById(ctx context.Context, customerId int) (entity.Customer, error) {
+func (repo *CustomerRepositoryImpl) GetCustomerById(ctx context.Context, customerId uint32) (entity.Customer, error) {
 	tx, err := repo.DB.Begin()
 	exception.PanicIfNeeded(err)
 	defer helper.CommitOrRollback(tx)
@@ -79,7 +76,7 @@ func (repo *CustomerRepositoryImpl) UpdateCustomer(ctx context.Context, customer
 	return customer
 }
 
-func (repo *CustomerRepositoryImpl) DeleteCustomer(ctx context.Context, customerId int) {
+func (repo *CustomerRepositoryImpl) DeleteCustomer(ctx context.Context, customerId uint32) {
 	tx, err := repo.DB.Begin()
 	exception.PanicIfNeeded(err)
 	defer helper.CommitOrRollback(tx)

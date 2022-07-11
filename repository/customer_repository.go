@@ -8,8 +8,8 @@ import (
 type CustomerRepository interface {
 	CreateCustomer(ctx context.Context, customer entity.Customer) entity.Customer
 	GetAllCustomer(ctx context.Context) []entity.Customer
-	GetCustomerById(ctx context.Context, customerId int) (entity.Customer, error)
+	GetCustomerById(ctx context.Context, customerId uint32) (entity.Customer, error)
 	UpdateCustomer(ctx context.Context, customer entity.Customer) entity.Customer
-	DeleteCustomer(ctx context.Context, customerId int)
+	DeleteCustomer(ctx context.Context, customerId uint32)
 	GetUserByUsername(ctx context.Context, username string) (entity.Customer, error)
 }
