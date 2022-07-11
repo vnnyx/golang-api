@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
@@ -15,22 +14,18 @@ import (
 )
 
 type AuthServiceImpl struct {
-	DB *sql.DB
 	repository.CustomerRepository
 	Redis *redis.Client
 }
 
-func NewAuthService(DB *sql.DB, customerRepository *repository.CustomerRepository, Redis *redis.Client) AuthService {
-	return &AuthServiceImpl{DB: DB, CustomerRepository: *customerRepository, Redis: Redis}
+func NewAuthService(customerRepository *repository.CustomerRepository, Redis *redis.Client) AuthService {
+	return &AuthServiceImpl{CustomerRepository: *customerRepository, Redis: Redis}
 }
 
 func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRequest) (response model.LoginResponse, err error) {
 	fmt.Println("AUTH_SERVICE")
-	tx, err := service.DB.Begin()
-	exception.PanicIfNeeded(err)
-	defer helper.CommitOrRollback(tx)
 
-	customer, err := service.GetUserByUsername(ctx, tx, request.Username)
+	customer, err := service.GetUserByUsername(ctx, request.Username)
 	if err != nil {
 		return response, err
 	}

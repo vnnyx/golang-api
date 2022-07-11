@@ -6,16 +6,21 @@ import (
 	"errors"
 	"golang-simple-api/entity"
 	"golang-simple-api/exception"
+	"golang-simple-api/helper"
 )
 
 type CustomerRepositoryImpl struct {
+	DB *sql.DB
 }
 
-func NewCustomerRepository() CustomerRepository {
-	return &CustomerRepositoryImpl{}
+func NewCustomerRepository(DB *sql.DB) CustomerRepository {
+	return &CustomerRepositoryImpl{DB: DB}
 }
 
-func (repo *CustomerRepositoryImpl) CreateCustomer(ctx context.Context, tx *sql.Tx, customer entity.Customer) entity.Customer {
+func (repo *CustomerRepositoryImpl) CreateCustomer(ctx context.Context, customer entity.Customer) entity.Customer {
+	tx, err := repo.DB.Begin()
+	exception.PanicIfNeeded(err)
+	defer helper.CommitOrRollback(tx)
 	SQL := "INSERT into customers(username, email, password, gender) VALUES (?,?,?,?)"
 	result, err := tx.ExecContext(ctx, SQL, customer.Username, customer.Email, customer.Password, customer.Gender)
 	exception.PanicIfNeeded(err)
@@ -26,7 +31,10 @@ func (repo *CustomerRepositoryImpl) CreateCustomer(ctx context.Context, tx *sql.
 	return customer
 }
 
-func (repo *CustomerRepositoryImpl) GetAllCustomer(ctx context.Context, tx *sql.Tx) []entity.Customer {
+func (repo *CustomerRepositoryImpl) GetAllCustomer(ctx context.Context) []entity.Customer {
+	tx, err := repo.DB.Begin()
+	exception.PanicIfNeeded(err)
+	defer helper.CommitOrRollback(tx)
 	SQL := "SELECT * FROM customers"
 	rows, err := tx.QueryContext(ctx, SQL)
 	exception.PanicIfNeeded(err)
@@ -41,7 +49,10 @@ func (repo *CustomerRepositoryImpl) GetAllCustomer(ctx context.Context, tx *sql.
 	return customers
 }
 
-func (repo *CustomerRepositoryImpl) GetCustomerById(ctx context.Context, tx *sql.Tx, customerId int) (entity.Customer, error) {
+func (repo *CustomerRepositoryImpl) GetCustomerById(ctx context.Context, customerId int) (entity.Customer, error) {
+	tx, err := repo.DB.Begin()
+	exception.PanicIfNeeded(err)
+	defer helper.CommitOrRollback(tx)
 	SQL := "SELECT * FROM customers WHERE id=?"
 	rows, err := tx.QueryContext(ctx, SQL, customerId)
 	exception.PanicIfNeeded(err)
@@ -57,21 +68,30 @@ func (repo *CustomerRepositoryImpl) GetCustomerById(ctx context.Context, tx *sql
 	}
 }
 
-func (repo *CustomerRepositoryImpl) UpdateCustomer(ctx context.Context, tx *sql.Tx, customer entity.Customer) entity.Customer {
+func (repo *CustomerRepositoryImpl) UpdateCustomer(ctx context.Context, customer entity.Customer) entity.Customer {
+	tx, err := repo.DB.Begin()
+	exception.PanicIfNeeded(err)
+	defer helper.CommitOrRollback(tx)
 	SQL := "UPDATE customers SET username=?, email=?, password=?, gender=? WHERE id=?"
-	_, err := tx.ExecContext(ctx, SQL, customer.Username, customer.Email, customer.Password, customer.Gender, customer.Id)
+	_, err = tx.ExecContext(ctx, SQL, customer.Username, customer.Email, customer.Password, customer.Gender, customer.Id)
 	exception.PanicIfNeeded(err)
 
 	return customer
 }
 
-func (repo *CustomerRepositoryImpl) DeleteCustomer(ctx context.Context, tx *sql.Tx, customerId int) {
+func (repo *CustomerRepositoryImpl) DeleteCustomer(ctx context.Context, customerId int) {
+	tx, err := repo.DB.Begin()
+	exception.PanicIfNeeded(err)
+	defer helper.CommitOrRollback(tx)
 	SQL := "DELETE FROM customers WHERE id=?"
-	_, err := tx.ExecContext(ctx, SQL, customerId)
+	_, err = tx.ExecContext(ctx, SQL, customerId)
 	exception.PanicIfNeeded(err)
 }
 
-func (repo *CustomerRepositoryImpl) GetUserByUsername(ctx context.Context, tx *sql.Tx, username string) (entity.Customer, error) {
+func (repo *CustomerRepositoryImpl) GetUserByUsername(ctx context.Context, username string) (entity.Customer, error) {
+	tx, err := repo.DB.Begin()
+	exception.PanicIfNeeded(err)
+	defer helper.CommitOrRollback(tx)
 	SQL := "SELECT * FROM customers WHERE username=?"
 	rows, err := tx.QueryContext(ctx, SQL, username)
 	exception.PanicIfNeeded(err)

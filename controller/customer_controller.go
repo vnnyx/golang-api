@@ -18,12 +18,11 @@ func NewCustomerController(customerService *service.CustomerService) CustomerCon
 }
 
 func (controller *CustomerController) Route(e *echo.Echo) {
-	router := e.Group("/api/customer", middleware.CheckToken)
-	router.POST("", controller.CreateCustomer)
-	router.GET("/:id", controller.GetCustomerById)
-	router.GET("", controller.GetAllCustomer)
-	router.PUT("/:id", controller.UpdateCustomer)
-	router.DELETE("/:id", controller.DeleteCustomer)
+	e.POST("/api/customer", controller.CreateCustomer)
+	e.GET("/api/customer/:id", controller.GetCustomerById, middleware.CheckToken)
+	e.GET("/api/customer", controller.GetAllCustomer, middleware.CheckToken)
+	e.PUT("/api/customer/:id", controller.UpdateCustomer, middleware.CheckToken)
+	e.DELETE("/api/customer/:id", controller.DeleteCustomer, middleware.CheckToken)
 }
 
 func (controller CustomerController) CreateCustomer(c echo.Context) error {

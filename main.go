@@ -15,9 +15,9 @@ func main() {
 	rdb := config.NewRedisClient()
 	database := config.NewMySQLDatabase(configuration)
 
-	customerRepository := repository.NewCustomerRepository()
-	customerService := service.NewCustomerService(database, &customerRepository)
-	authService := service.NewAuthService(database, &customerRepository, rdb)
+	customerRepository := repository.NewCustomerRepository(database)
+	customerService := service.NewCustomerService(&customerRepository)
+	authService := service.NewAuthService(&customerRepository, rdb)
 	customerController := controller.NewCustomerController(&customerService)
 	authController := controller.NewAuthController(&authService)
 
