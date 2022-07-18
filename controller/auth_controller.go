@@ -2,10 +2,10 @@ package controller
 
 import (
 	"github.com/labstack/echo/v4"
-	"golang-simple-api/exception"
-	"golang-simple-api/middleware"
-	"golang-simple-api/model"
-	"golang-simple-api/service"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/middleware"
+	"github.com/vnnyx/golang-api/model"
+	"github.com/vnnyx/golang-api/service"
 )
 
 type AuthController struct {

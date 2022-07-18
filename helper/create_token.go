@@ -4,23 +4,20 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"golang-simple-api/exception"
-	"golang-simple-api/model"
-	"os"
-	"strconv"
+	"github.com/vnnyx/golang-api/config"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/model"
 	"time"
 )
 
-func CreateToken(request model.JwtPayload) *model.TokenDetails {
-	accessExpired, _ := strconv.Atoi(os.Getenv("JWT_MINUTE"))
+func CreateToken(request model.JwtPayload, configuration *config.Config) *model.TokenDetails {
+	accessExpired := configuration.JWTMinute
 
 	td := &model.TokenDetails{}
 	td.AtExpires = time.Now().Add(time.Minute * time.Duration(accessExpired)).Unix()
 	td.AccessUuid = uuid.New().String()
 
-	var err error
-
-	keyAccess, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(os.Getenv("JWT_SECRET_KEY")))
+	keyAccess, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(configuration.JWTSecretKey))
 	exception.PanicIfNeeded(err)
 
 	now := time.Now().UTC()

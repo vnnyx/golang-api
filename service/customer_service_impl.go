@@ -2,23 +2,26 @@ package service
 
 import (
 	"context"
-	"golang-simple-api/entity"
-	"golang-simple-api/exception"
-	"golang-simple-api/model"
-	"golang-simple-api/repository"
-	"golang-simple-api/validation"
+	"database/sql"
+	"errors"
+	"github.com/jmoiron/sqlx"
+	"github.com/vnnyx/golang-api/entity"
+	"github.com/vnnyx/golang-api/model"
+	"github.com/vnnyx/golang-api/repository"
+	"github.com/vnnyx/golang-api/validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type CustomerServiceImpl struct {
 	repository.CustomerRepository
+	DB *sqlx.DB
 }
 
-func NewCustomerService(customerRepository repository.CustomerRepository) CustomerService {
-	return &CustomerServiceImpl{CustomerRepository: customerRepository}
+func NewCustomerService(customerRepository repository.CustomerRepository, DB *sqlx.DB) CustomerService {
+	return &CustomerServiceImpl{CustomerRepository: customerRepository, DB: DB}
 }
 
-func (service *CustomerServiceImpl) CreateCustomer(ctx context.Context, request model.CustomerCreateRequest) model.CustomerResponse {
+func (service *CustomerServiceImpl) CreateCustomer(ctx context.Context, request model.CustomerCreateRequest) (model.CustomerResponse, error) {
 	validation.Validate(request)
 
 	customer := entity.Customer{
@@ -29,20 +32,53 @@ func (service *CustomerServiceImpl) CreateCustomer(ctx context.Context, request 
 		Gender:   request.Gender,
 	}
 
-	customer = service.CustomerRepository.CreateCustomer(ctx, customer)
+	tx, err := service.DB.BeginTxx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 
+	if err != nil {
+		return model.CustomerResponse{}, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	customer, err = service.CustomerRepository.CreateCustomer(ctx, tx, customer)
+	if err != nil {
+		return model.CustomerResponse{}, err
+	}
 	response := model.CustomerResponse{
 		Id:       customer.Id,
 		Username: customer.Username,
 		Email:    customer.Email,
 		Gender:   customer.Gender,
 	}
-
-	return response
+	return response, nil
 }
 
-func (service *CustomerServiceImpl) GetAllCustomer(ctx context.Context) []model.CustomerResponse {
-	customers := service.CustomerRepository.GetAllCustomer(ctx)
+func (service *CustomerServiceImpl) GetAllCustomer(ctx context.Context) ([]model.CustomerResponse, error) {
+	tx, err := service.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return []model.CustomerResponse{}, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	customers, err := service.CustomerRepository.GetAllCustomer(ctx, tx)
+	if err != nil {
+		return []model.CustomerResponse{}, err
+	}
 	var response []model.CustomerResponse
 	for _, customer := range customers {
 		response = append(response, model.CustomerResponse{
@@ -52,13 +88,27 @@ func (service *CustomerServiceImpl) GetAllCustomer(ctx context.Context) []model.
 			Gender:   customer.Gender,
 		})
 	}
-	return response
+	return response, nil
 }
 
-func (service *CustomerServiceImpl) GetCustomerById(ctx context.Context, customerId uint32) model.CustomerResponse {
-	customer, err := service.CustomerRepository.GetCustomerById(ctx, customerId)
+func (service *CustomerServiceImpl) GetCustomerById(ctx context.Context, customerId uint32) (model.CustomerResponse, error) {
+	tx, err := service.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		exception.PanicIfNeeded("USER_NOT_FOUND")
+		return model.CustomerResponse{}, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	customer, err := service.CustomerRepository.GetCustomerById(ctx, tx, customerId)
+	if err != nil {
+		return model.CustomerResponse{}, errors.New("USER_NOT_FOUND")
 	}
 
 	response := model.CustomerResponse{
@@ -67,19 +117,35 @@ func (service *CustomerServiceImpl) GetCustomerById(ctx context.Context, custome
 		Email:    customer.Email,
 		Gender:   customer.Gender,
 	}
-	return response
+	return response, nil
 }
 
-func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request model.CustomerUpdateRequest) model.CustomerResponse {
+func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request model.CustomerUpdateRequest) (model.CustomerResponse, error) {
 	validation.UpdateValidate(request)
 
-	customer, err := service.CustomerRepository.GetCustomerById(ctx, request.Id)
+	tx, err := service.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		exception.PanicIfNeeded("USER_NOT_FOUND")
+		return model.CustomerResponse{}, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	customer, err := service.CustomerRepository.GetCustomerById(ctx, tx, request.Id)
+	if err != nil {
+		return model.CustomerResponse{}, errors.New("USER_NOT_FOUND")
 	}
 
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-	exception.PanicIfNeeded(err)
+	if err != nil {
+		return model.CustomerResponse{}, err
+	}
 	customer = entity.Customer{
 		Id:       request.Id,
 		Username: request.Username,
@@ -88,7 +154,10 @@ func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request 
 		Gender:   request.Gender,
 	}
 
-	customer = service.CustomerRepository.UpdateCustomer(ctx, customer)
+	customer, err = service.CustomerRepository.UpdateCustomer(ctx, tx, customer)
+	if err != nil {
+		return model.CustomerResponse{}, err
+	}
 
 	response := model.CustomerResponse{
 		Id:       customer.Id,
@@ -97,12 +166,31 @@ func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request 
 		Gender:   customer.Gender,
 	}
 
-	return response
+	return response, nil
 }
 
-func (service *CustomerServiceImpl) DeleteCustomer(ctx context.Context, customerId uint32) {
-	_, err := service.CustomerRepository.GetCustomerById(ctx, customerId)
-	exception.PanicIfNeeded(err)
-
-	service.CustomerRepository.DeleteCustomer(ctx, customerId)
+func (service *CustomerServiceImpl) DeleteCustomer(ctx context.Context, customerId uint32) error {
+	tx, err := service.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	_, err = service.CustomerRepository.GetCustomerById(ctx, tx, customerId)
+	if err != nil {
+		return err
+	}
+	err = service.CustomerRepository.DeleteCustomer(ctx, tx, customerId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

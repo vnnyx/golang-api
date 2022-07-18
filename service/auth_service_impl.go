@@ -4,28 +4,50 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"golang-simple-api/exception"
-	"golang-simple-api/helper"
-	"golang-simple-api/model"
-	"golang-simple-api/repository"
+	"github.com/jmoiron/sqlx"
+	"github.com/vnnyx/golang-api/config"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/helper"
+	"github.com/vnnyx/golang-api/model"
+	"github.com/vnnyx/golang-api/repository"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 type AuthServiceImpl struct {
 	repository.CustomerRepository
-	Redis *redis.Client
+	repository.AuthRepository
+	*config.Config
+	*sqlx.DB
 }
 
-func NewAuthService(customerRepository *repository.CustomerRepository, Redis *redis.Client) AuthService {
-	return &AuthServiceImpl{CustomerRepository: *customerRepository, Redis: Redis}
+func NewAuthService(config *config.Config, DB *sqlx.DB) AuthService {
+	return &AuthServiceImpl{Config: config, DB: DB}
+}
+
+func (service *AuthServiceImpl) InjectCustomerRepository(customerRepository repository.CustomerRepository) {
+	service.CustomerRepository = customerRepository
+}
+
+func (service *AuthServiceImpl) InjectAuthRepository(authRepository repository.AuthRepository) {
+	service.AuthRepository = authRepository
 }
 
 func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRequest) (response model.LoginResponse, err error) {
-	fmt.Println("AUTH_SERVICE")
-
-	customer, err := service.GetUserByUsername(ctx, request.Username)
+	tx, err := service.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return model.LoginResponse{}, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	customer, err := service.CustomerRepository.GetUserByUsername(ctx, tx, request.Username)
 	if err != nil {
 		return response, err
 	}
@@ -38,9 +60,16 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRe
 		UserId:   customer.Id,
 		Username: customer.Username,
 		Email:    customer.Email,
-	})
+	}, service.Config)
 
-	service.Redis.Set(ctx, td.AccessUuid, td.AccessToken, time.Unix(td.AtExpires, 0).Sub(time.Now()))
+	tokenDetails := &model.TokenDetails{
+		AccessToken: td.AccessToken,
+		AccessUuid:  td.AccessUuid,
+		AtExpires:   td.AtExpires,
+	}
+
+	err = service.AuthRepository.StoreToken(ctx, *tokenDetails)
+	exception.PanicIfNeeded(err)
 
 	response = model.LoginResponse{
 		AccessToken: td.AccessToken,
@@ -53,9 +82,10 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRe
 }
 
 func (service *AuthServiceImpl) Logout(ctx context.Context, accessUuid string) {
-	err := service.Redis.Del(ctx, accessUuid).Err()
+	err := service.AuthRepository.DeleteToken(ctx, accessUuid)
 	if err != nil {
-		exception.PanicIfNeeded(model.UNAUTHORIZATION)
+		fmt.Println(err)
+		exception.PanicIfNeeded(errors.New(model.UNAUTHORIZATION))
 	}
 
 }

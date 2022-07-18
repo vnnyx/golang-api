@@ -3,10 +3,10 @@ package controller
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"golang-simple-api/exception"
-	"golang-simple-api/middleware"
-	"golang-simple-api/model"
-	"golang-simple-api/service"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/middleware"
+	"github.com/vnnyx/golang-api/model"
+	"github.com/vnnyx/golang-api/service"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
 )
@@ -37,7 +37,10 @@ func (controller CustomerController) CreateCustomer(c echo.Context) error {
 	request.Password = string(password)
 	request.Id = uuid.New().ID()
 
-	response := controller.CustomerService.CreateCustomer(c.Request().Context(), request)
+	response, err := controller.CustomerService.CreateCustomer(c.Request().Context(), request)
+	if err != nil {
+		return err
+	}
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",
@@ -47,7 +50,10 @@ func (controller CustomerController) CreateCustomer(c echo.Context) error {
 
 func (controller CustomerController) GetCustomerById(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	response := controller.CustomerService.GetCustomerById(c.Request().Context(), uint32(id))
+	response, err := controller.CustomerService.GetCustomerById(c.Request().Context(), uint32(id))
+	if err != nil {
+		return err
+	}
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",
@@ -56,7 +62,10 @@ func (controller CustomerController) GetCustomerById(c echo.Context) error {
 }
 
 func (controller CustomerController) GetAllCustomer(c echo.Context) error {
-	response := controller.CustomerService.GetAllCustomer(c.Request().Context())
+	response, err := controller.CustomerService.GetAllCustomer(c.Request().Context())
+	if err != nil {
+		return err
+	}
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",
@@ -70,7 +79,10 @@ func (controller CustomerController) UpdateCustomer(c echo.Context) error {
 	request.Id = uint32(id)
 	err := c.Bind(&request)
 	exception.PanicIfNeeded(err)
-	response := controller.CustomerService.UpdateCustomer(c.Request().Context(), request)
+	response, err := controller.CustomerService.UpdateCustomer(c.Request().Context(), request)
+	if err != nil {
+		return err
+	}
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",
@@ -80,7 +92,10 @@ func (controller CustomerController) UpdateCustomer(c echo.Context) error {
 
 func (controller CustomerController) DeleteCustomer(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
-	controller.CustomerService.DeleteCustomer(c.Request().Context(), uint32(id))
+	err := controller.CustomerService.DeleteCustomer(c.Request().Context(), uint32(id))
+	if err != nil {
+		return err
+	}
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",
