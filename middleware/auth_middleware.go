@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
-	"golang-simple-api/config"
-	"golang-simple-api/exception"
-	"golang-simple-api/model"
+	"github.com/vnnyx/golang-api/config"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/model"
+	"github.com/vnnyx/golang-api/repository"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -22,7 +22,9 @@ type DecodedStructure struct {
 }
 
 func ValidateToken(encodedToken string) (token *jwt.Token, errData error) {
-	jwtPublicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
+	configuration, err := config.NewConfig(".", ".env")
+	exception.PanicIfNeeded(err)
+	jwtPublicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(configuration.JWTPublicKey))
 
 	if err != nil {
 		return token, err
@@ -43,7 +45,9 @@ func ValidateToken(encodedToken string) (token *jwt.Token, errData error) {
 }
 
 func DecodeToken(encodedToken string) (decodedResult DecodedStructure, errData error) {
-	jwtPublicKey, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
+	configuration, err := config.NewConfig(".", ".env")
+	exception.PanicIfNeeded(err)
+	jwtPublicKey, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(configuration.JWTPublicKey))
 	tokenString := encodedToken
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -95,6 +99,7 @@ func CheckToken(next echo.HandlerFunc) echo.HandlerFunc {
 		//extract data from token
 		decodeRes, err := DecodeToken(tokenString)
 		if err != nil {
+			fmt.Println(err)
 			return ctx.JSON(http.StatusUnauthorized, model.WebResponse{
 				Code:   http.StatusUnauthorized,
 				Status: "Unauthorized",
@@ -104,10 +109,9 @@ func CheckToken(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
-		redisGetUuid := config.NewRedisClient().Get(context.Background(), decodeRes.AccessUuid)
-		_, err = redisGetUuid.Result()
+		_, err = repository.NewAuthRepository(config.NewRedisClient()).GetToken(context.Background(), decodeRes.AccessUuid)
 		if err != nil {
-			exception.PanicIfNeeded(model.UNAUTHORIZATION)
+			exception.PanicIfNeeded(errors.New(model.UNAUTHORIZATION))
 		}
 
 		//set global variable
