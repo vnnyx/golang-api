@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/vnnyx/golang-api/exception"
 	"github.com/vnnyx/golang-api/middleware"
 	"github.com/vnnyx/golang-api/model"
 	"github.com/vnnyx/golang-api/service"
@@ -25,10 +24,14 @@ func (controller AuthController) Route(e *echo.Echo) {
 func (controller AuthController) Login(c echo.Context) error {
 	var request model.LoginRequest
 	err := c.Bind(&request)
-	exception.PanicIfNeeded(err)
+	if err != nil {
+		return err
+	}
 
 	response, err := controller.AuthService.Login(c.Request().Context(), request)
-	exception.PanicIfNeeded(err)
+	if err != nil {
+		return err
+	}
 
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
@@ -40,8 +43,10 @@ func (controller AuthController) Login(c echo.Context) error {
 
 func (controller AuthController) Logout(c echo.Context) error {
 	accessUuid := c.Get("currentAccessUuid")
-	controller.AuthService.Logout(c.Request().Context(), accessUuid.(string))
-
+	err := controller.AuthService.Logout(c.Request().Context(), accessUuid.(string))
+	if err != nil {
+		return err
+	}
 	return c.JSON(200, model.WebResponse{
 		Code:   200,
 		Status: "OK",

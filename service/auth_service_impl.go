@@ -3,10 +3,8 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/vnnyx/golang-api/config"
-	"github.com/vnnyx/golang-api/exception"
 	"github.com/vnnyx/golang-api/helper"
 	"github.com/vnnyx/golang-api/model"
 	"github.com/vnnyx/golang-api/repository"
@@ -49,7 +47,7 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRe
 	}()
 	customer, err := service.CustomerRepository.GetUserByUsername(ctx, tx, request.Username)
 	if err != nil {
-		return response, err
+		return response, errors.New(model.UNAUTHORIZATION)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(customer.Password), []byte(request.Password))
 	if err != nil {
@@ -69,7 +67,9 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRe
 	}
 
 	err = service.AuthRepository.StoreToken(ctx, *tokenDetails)
-	exception.PanicIfNeeded(err)
+	if err != nil {
+		return model.LoginResponse{}, err
+	}
 
 	response = model.LoginResponse{
 		AccessToken: td.AccessToken,
@@ -81,11 +81,10 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.LoginRe
 	return response, nil
 }
 
-func (service *AuthServiceImpl) Logout(ctx context.Context, accessUuid string) {
+func (service *AuthServiceImpl) Logout(ctx context.Context, accessUuid string) error {
 	err := service.AuthRepository.DeleteToken(ctx, accessUuid)
 	if err != nil {
-		fmt.Println(err)
-		exception.PanicIfNeeded(errors.New(model.UNAUTHORIZATION))
+		return errors.New(model.UNAUTHORIZATION)
 	}
-
+	return nil
 }
