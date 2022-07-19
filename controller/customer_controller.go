@@ -77,7 +77,10 @@ func (controller CustomerController) UpdateCustomer(c echo.Context) error {
 	id, _ := strconv.Atoi(c.Param("id"))
 	var request model.CustomerUpdateRequest
 	request.Id = uint32(id)
-	err := c.Bind(&request)
+	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	exception.PanicIfNeeded(err)
+	request.Password = string(password)
+	err = c.Bind(&request)
 	exception.PanicIfNeeded(err)
 	response, err := controller.CustomerService.UpdateCustomer(c.Request().Context(), request)
 	if err != nil {

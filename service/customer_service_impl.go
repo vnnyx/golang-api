@@ -9,7 +9,6 @@ import (
 	"github.com/vnnyx/golang-api/model"
 	"github.com/vnnyx/golang-api/repository"
 	"github.com/vnnyx/golang-api/validation"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type CustomerServiceImpl struct {
@@ -23,7 +22,6 @@ func NewCustomerService(customerRepository repository.CustomerRepository, DB *sq
 
 func (service *CustomerServiceImpl) CreateCustomer(ctx context.Context, request model.CustomerCreateRequest) (model.CustomerResponse, error) {
 	validation.Validate(request)
-
 	customer := entity.Customer{
 		Id:       request.Id,
 		Username: request.Username,
@@ -142,15 +140,11 @@ func (service *CustomerServiceImpl) UpdateCustomer(ctx context.Context, request 
 		return model.CustomerResponse{}, errors.New("USER_NOT_FOUND")
 	}
 
-	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return model.CustomerResponse{}, err
-	}
 	customer = entity.Customer{
 		Id:       request.Id,
 		Username: request.Username,
 		Email:    request.Email,
-		Password: string(password),
+		Password: request.Password,
 		Gender:   request.Gender,
 	}
 
