@@ -3,21 +3,24 @@ package main
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang-simple-api/config"
-	"golang-simple-api/controller"
-	"golang-simple-api/exception"
-	"golang-simple-api/repository"
-	"golang-simple-api/service"
+	"github.com/vnnyx/golang-api/config"
+	"github.com/vnnyx/golang-api/controller"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/repository"
+	"github.com/vnnyx/golang-api/service"
 )
 
 func main() {
-	configuration := config.New(".env")
+	configuration, err := config.NewConfig(".", ".env")
 	rdb := config.NewRedisClient()
 	database := config.NewMySQLDatabase(configuration)
 
-	customerRepository := repository.NewCustomerRepository(database)
-	customerService := service.NewCustomerService(customerRepository)
-	authService := service.NewAuthService(&customerRepository, rdb)
+	customerRepository := repository.NewCustomerRepository()
+	authRepository := repository.NewAuthRepository(rdb)
+	customerService := service.NewCustomerService(customerRepository, database)
+	authService := service.NewAuthService(configuration, database)
+	authService.InjectAuthRepository(authRepository)
+	authService.InjectCustomerRepository(customerRepository)
 	customerController := controller.NewCustomerController(&customerService)
 	authController := controller.NewAuthController(&authService)
 
@@ -27,6 +30,6 @@ func main() {
 	app.HTTPErrorHandler = exception.ErrorHandler
 	customerController.Route(app)
 	authController.Route(app)
-	err := app.Start(":9000")
+	err = app.Start(":9000")
 	exception.PanicIfNeeded(err)
 }

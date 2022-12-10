@@ -1,7 +1,7 @@
 ### Framework
 * Web : Echo
 * Validation : Go-Ozzo
-* Config : GoDotEnv
+* Config : Viper
 * Database : Mysql
 
 ### Migration Tools

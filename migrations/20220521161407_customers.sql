@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE customers
 (
-    id         INT NOT NULL PRIMARY KEY,
+    id         BIGINT NOT NULL PRIMARY KEY,
     username   VARCHAR(100) NOT NULL,
     email      VARCHAR(255) NOT NULL,
     password   VARCHAR(100) NOT NULL,

@@ -2,13 +2,15 @@ package config
 
 import (
 	"github.com/go-redis/redis/v8"
-	"os"
+	"github.com/vnnyx/golang-api/exception"
 )
 
 func NewRedisClient() *redis.Client {
+	config, err := NewConfig(".", ".env")
+	exception.PanicIfNeeded(err)
 	client := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_HOST"),
-		Password: os.Getenv("REDIS_PASSWORD"),
+		Addr:     config.RedisHost,
+		Password: config.RedisPassword,
 	})
 	return client
 }

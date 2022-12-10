@@ -1,6 +1,6 @@
 package exception
 
-func PanicIfNeeded(err interface{}) {
+func PanicIfNeeded(err error) {
 	if err != nil {
 		panic(err)
 	}

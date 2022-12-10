@@ -2,8 +2,8 @@ package validation
 
 import (
 	validation "github.com/go-ozzo/ozzo-validation"
-	"golang-simple-api/exception"
-	"golang-simple-api/model"
+	"github.com/vnnyx/golang-api/exception"
+	"github.com/vnnyx/golang-api/model"
 )
 
 func Validate(request model.CustomerCreateRequest) {

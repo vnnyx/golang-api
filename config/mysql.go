@@ -2,34 +2,27 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"golang-simple-api/exception"
-	"strconv"
+	"github.com/jmoiron/sqlx"
+	"github.com/vnnyx/golang-api/exception"
 	"time"
 )
 
-func NewMySQLDatabase(configuration Config) *sql.DB {
+func NewMySQLDatabase(configuration *Config) *sqlx.DB {
 	ctx, cancel := NewMySQLContext()
 	defer cancel()
 
-	sqlDB, err := sql.Open("mysql", configuration.Get("MYSQL_HOST_SLAVE"))
+	sqlDB, err := sqlx.Open("mysql", configuration.MysqlHostSlave)
 	exception.PanicIfNeeded(err)
 
 	err = sqlDB.PingContext(ctx)
 	exception.PanicIfNeeded(err)
 
-	mysqlPoolMax, err := strconv.Atoi(configuration.Get("MYSQL_POOL_MAX"))
-	exception.PanicIfNeeded(err)
+	mysqlPoolMax := configuration.MysqlPoolMax
 
-	mysqlIdleMax, err := strconv.Atoi(configuration.Get("MYSQL_IDLE_MAX"))
-	exception.PanicIfNeeded(err)
+	mysqlIdleMax := configuration.MysqlIdleMax
 
-	mysqlMaxLifeTime, err := strconv.Atoi(configuration.Get("MYSQL_MAX_LIFE_TIME_MINUTE"))
-	exception.PanicIfNeeded(err)
-
-	// mysqlMaxIdleTime, err := strconv.Atoi(configuration.Get("MYSQL_MAX_IDLE_TIME_MINUTE"))
-	exception.PanicIfNeeded(err)
+	mysqlMaxLifeTime := configuration.MysqlMaxLifeTimeMinute
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
 	sqlDB.SetMaxIdleConns(mysqlIdleMax)

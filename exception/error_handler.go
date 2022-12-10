@@ -3,7 +3,7 @@ package exception
 import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
-	"golang-simple-api/model"
+	"github.com/vnnyx/golang-api/model"
 	"net/http"
 	"strings"
 )
@@ -45,7 +45,10 @@ func generalError(err error, ctx echo.Context) {
 		_ = ctx.JSON(http.StatusInternalServerError, model.WebResponse{
 			Code:   http.StatusInternalServerError,
 			Status: "INTERNAL_SERVER_ERROR",
-			Data:   err.Error(),
+			Data:   nil,
+			Error: map[string]interface{}{
+				"message": "Internal server error",
+			},
 		})
 	}
 }
@@ -85,6 +88,15 @@ func databaseError(err error, ctx echo.Context) bool {
 			Data:   nil,
 			Error: map[string]interface{}{
 				"email": "MUST_UNIQUE",
+			},
+		})
+	} else {
+		_ = ctx.JSON(http.StatusInternalServerError, model.WebResponse{
+			Code:   http.StatusInternalServerError,
+			Status: "INTERNAL_SERVER_ERROR",
+			Data:   nil,
+			Error: map[string]interface{}{
+				"message": "Internal server error",
 			},
 		})
 	}
