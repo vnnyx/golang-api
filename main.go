@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/vnnyx/golang-api/config"
@@ -30,6 +32,6 @@ func main() {
 	app.HTTPErrorHandler = exception.ErrorHandler
 	customerController.Route(app)
 	authController.Route(app)
-	err = app.Start(":9000")
+	err = app.Start(fmt.Sprintf(":%v", configuration.AppPort))
 	exception.PanicIfNeeded(err)
 }
