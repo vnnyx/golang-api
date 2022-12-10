@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	AppPort                string `mapstructure:"APP_PORT"`
 	MysqlHostSlave         string `mapstructure:"MYSQL_HOST_SLAVE"`
 	MysqlPoolMin           int    `mapstructure:"MYSQL_POOL_MIN"`
 	MysqlPoolMax           int    `mapstructure:"MYSQL_POOL_MAX"`
